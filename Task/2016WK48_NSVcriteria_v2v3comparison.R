@@ -1,12 +1,12 @@
-# ====================================================================
+# =======================================================================
 # author: Hank Hsu
 # the first edition date: 2016/11/22
 # the last modification date: 2016/11/22
 # version: Rev01.20161122
 # The following code is for the NSV rig criteria v2 and v3 comparison
-# =====================================================================
+# =======================================================================
 library(dplyr)
-library(tidyr) 
+library(tidyr)
 library(ggplot2)
 library(stringr)
 library(data.table)
@@ -40,7 +40,7 @@ TSMC_FO <- NSV_scoreV2 %>%
             distinct(WaferID,.keep_all = TRUE)
 
 # import VOQC die bin data
-DieBinCAll <- read.csv("c:/9_R_raw_temp/0_useful/DieBinCAll_20161122.csv") %>% 
+DieBinCAll <- read.csv("c:/9_R_raw_temp/0_useful/DieBinCAll_20161124.csv") %>% 
                 mutate(DieID= paste(WaferID,"_R",Reticle,"_D",Die.in.Reticle,sep="")) %>% 
                 mutate(PHDiePos.temp= paste ("0",Die.on.PH,sep="")) %>%
                 mutate(PHDiePos=paste("PHD",str_sub(PHDiePos.temp,-2,-1),sep="")) %>% 
@@ -59,7 +59,31 @@ NSV_scoreV3_VOQC <- left_join(NSV_scoreV3,DieBinCAll_short,by="DieID") %>%
                     
 write.csv(NSV_scoreV3_VOQC,"c:/9_R_raw_temp/0_useful/2016WK48_Die_NSVV3_VOQC.csv")
 
+#=============================================
+#20161124 filter to get 4 lot data
 
+NSV_scoreV3_4lot.temp <- NSV_scoreV3 %>% 
+                          filter(LotID=="CHV800"|LotID=="CGN398"|
+                                 LotID=="CGU459"|LotID=="CHA658") %>% 
+                          group_by(LotID,WaferID) %>% 
+                          left_join(TSMC_FO,by = "WaferID")
+  
 
+DieBinCAll_4lot.temp <- read.csv("c:/9_R_raw_temp/0_useful/DieBinCAll_20161124.csv") 
+DieBinCAll_4lot<- DieBinCAll_4lot.temp
+                  mutate(DieID= paste(WaferID,"_R",Reticle,"_D",Die.in.Reticle,sep="")) %>% 
+                  mutate(PHDiePos.temp= paste ("0",Die.on.PH,sep="")) %>%
+                  mutate(PHDiePos=paste("PHD",str_sub(PHDiePos.temp,-2,-1),sep="")) %>% 
+                  mutate(RetiDiePos.temp= paste ("0",Die.in.Reticle,sep="")) %>%
+                  mutate(RetiDiePos=paste("RD",str_sub(RetiDiePos.temp,-2,-1),sep="")) %>% 
+                  select(DieID,PHID,Bin.code,VOQC.Result,PHDiePos) %>% 
+                  # mutate(LotID=str_sub(DieID,1,6)) %>% 
+                  # mutate(WaferID=str_sub(DieID,1,9)) %>% 
+                  # mutate(WaferGroup =str_sub(DieID,1,3)) %>% 
+                  filter(LotID=="CHV800"|LotID=="CGN398"|
+                           LotID=="CGU459"|LotID=="CHA658") %>% 
+                  group_by(LotID,WaferID) 
 
-
+NSV_scoreV3_4lot <- left_join(NSV_scoreV3_4lot.temp,DieBinCAll_4lot, by="DieID")
+write.csv(NSV_scoreV3_4lot,"c:/9_R_raw_temp/0_useful/2016WK48_Die_NSVV3_VOQC_4lot.csv")
+                  
